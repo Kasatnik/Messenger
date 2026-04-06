@@ -3,12 +3,14 @@ import tkinter as tk
 import socket
 
 
+
 class Window:
     def __init__(self):
 
         self.message_entry = None
         self.chat_field = None
         self.chat_root = None
+        self.conn_field = None
 
         self.root = tk.Tk()
         self.root.title("Connection")
@@ -29,25 +31,21 @@ class Window:
             bg="#2c3e50"
         ).pack(pady=20)
 
-        # Поле имени
         tk.Label(self.root, text="Name", bg="#2c3e50", fg="white").place(x=120, y=80)
         self.name_entry = tk.Entry(self.root, font=("Arial", 12), bd=2, relief="groove")
         self.name_entry.place(x=200, y=80)
         self.name_entry.insert(0, "Roma")
 
-        # Поле IP
         tk.Label(self.root, text="IP", bg="#2c3e50", fg="white").place(x=120, y=130)
         self.ip_entry = tk.Entry(self.root, font=("Arial", 12), bd=2, relief="groove")
         self.ip_entry.place(x=200, y=130)
         self.ip_entry.insert(0, "127.0.0.1")
 
-        # Поле порта
         tk.Label(self.root, text="Port", bg="#2c3e50", fg="white").place(x=120, y=180)
         self.port_entry = tk.Entry(self.root, font=("Arial", 12), bd=2, relief="groove")
         self.port_entry.place(x=200, y=180)
         self.port_entry.insert(0, "4500")
 
-        # Кнопка подключения
         self.connect_button = tk.Button(
             self.root,
             text="Connect",
@@ -83,7 +81,19 @@ class Window:
         self.chat_root.geometry("600x600")
         self.chat_root.configure(bg="#34495e")
 
-        # Поле чата
+        self.conn_field = tk.Text(
+            self.chat_root,
+            bg="#2f3640",
+            fg="#f5f6fa",
+            font=("Consolas", 10),
+            bd=0,
+            padx=8,
+            pady=8
+        )
+        self.conn_field.place(x=10, y=10, width=180, height=500)
+        self.conn_field.insert("end", "Подключения:\n\n")
+        self.conn_field.config(state="disabled")  # чтобы нельзя было редактировать
+
         self.chat_field = tk.Text(
             self.chat_root,
             bg="#1e272e",
@@ -93,18 +103,16 @@ class Window:
             padx=10,
             pady=10
         )
-        self.chat_field.place(x=10, y=10, width=580, height=500)
+        self.chat_field.place(x=200, y=10, width=380, height=500)
 
-        # Поле ввода
         self.message_entry = tk.Entry(
             self.chat_root,
             font=("Arial", 12),
             bd=2,
             relief="groove"
         )
-        self.message_entry.place(x=10, y=530, width=450, height=40)
+        self.message_entry.place(x=200, y=530, width=300, height=40)
 
-        # Кнопка отправки
         self.send_button = tk.Button(
             self.chat_root,
             text="Send",
@@ -116,21 +124,23 @@ class Window:
             bd=0,
             width=10
         )
-        self.send_button.place(x=470, y=530, height=40)
+        self.send_button.place(x=510, y=530, height=40)
 
         self.receive_thread = threading.Thread(
             target=self.receive_messages, daemon=True
         )
         self.receive_thread.start()
-        self.chat_field.insert("0.0", f"Подключился: {self.username}")
+
+        # Первое сообщение о подключении
+        self.chat_field.insert("end", f"Подключился: {self.username}\n")
 
         self.chat_root.mainloop()
 
     def send_message(self):
         message = self.message_entry.get()
-        full_message = f"{self.username}: {message}"
+        full_message = f'{self.username}: {message}'
         self.client_socket.send(full_message.encode())
-        self.chat_field.insert("0.0", full_message + "\n")
+        self.chat_field.insert("end", full_message + "\n")
 
     def receive_messages(self):
         while True:
@@ -140,8 +150,9 @@ class Window:
             if message:
                 self.chat_root.after(0, self.update_chat, message)
 
+
     def update_chat(self, message):
-        self.chat_field.insert("0.0", message + "\n")
+        self.chat_field.insert("end", message + "\n")
 
     def run(self):
         self.root.mainloop()
